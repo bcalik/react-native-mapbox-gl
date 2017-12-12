@@ -9,6 +9,7 @@ import android.support.annotation.NonNull;
 import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 
 import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.bridge.ReactContext;
@@ -173,6 +174,12 @@ public class RCTMGLMapView extends MapView implements
         if (feature instanceof RCTSource) {
             mSources.remove(childPosition);
         } else if (feature instanceof RCTMGLPointAnnotation) {
+            RCTMGLPointAnnotation annotation = (RCTMGLPointAnnotation) feature;
+
+            if (annotation.getMapboxID() == mActiveMarkerID) {
+                mActiveMarkerID = -1;
+            }
+
             mPointAnnotations.remove(childPosition);
         }
 
@@ -298,54 +305,60 @@ public class RCTMGLMapView extends MapView implements
 
     @Override
     public void onMapClick(@NonNull LatLng point) {
+        boolean isEventCaptured = false;
+
         if (mActiveMarkerID != -1) {
             for (int i = 0; i < mPointAnnotations.size(); i++) {
                 RCTMGLPointAnnotation annotation = mPointAnnotations.get(mPointAnnotations.keyAt(i));
 
                 if (mActiveMarkerID == annotation.getMapboxID()) {
-                    deselectAnnotation(annotation);
+                    isEventCaptured = deselectAnnotation(annotation);
                 }
             }
-        } else {
-            PointF screenPoint = mMap.getProjection().toScreenLocation(point);
-            List<RCTSource> touchableSources = getAllTouchableSources();
-
-            Map<String, Feature> hits = new HashMap<>();
-            List<RCTSource> hitTouchableSources = new ArrayList<>();
-            for (RCTSource touchableSource : touchableSources) {
-                Map<String, Double> hitbox = touchableSource.getTouchHitbox();
-                if (hitbox == null) {
-                    continue;
-                }
-
-                float halfWidth = hitbox.get("width").floatValue() / 2.0f;
-                float halfHeight = hitbox.get("height").floatValue() / 2.0f;
-
-                RectF hitboxF = new RectF();
-                hitboxF.set(
-                        screenPoint.x - halfWidth,
-                        screenPoint.y - halfHeight,
-                        screenPoint.x + halfWidth,
-                        screenPoint.y + halfHeight);
-
-                List<Feature> features = mMap.queryRenderedFeatures(hitboxF, touchableSource.getLayerIDs());
-                if (features.size() > 0) {
-                    hits.put(touchableSource.getID(), features.get(0));
-                    hitTouchableSources.add(touchableSource);
-                }
-            }
-
-            if (hits.size() > 0) {
-                RCTSource source = getTouchableSourceWithHighestZIndex(hitTouchableSources);
-                if (source != null && source.hasPressListener()) {
-                    source.onPress(hits.get(source.getID()));
-                    return;
-                }
-            }
-
-            MapClickEvent event = new MapClickEvent(this, point, screenPoint);
-            mManager.handleEvent(event);
         }
+
+        if (isEventCaptured) {
+            return;
+        }
+
+        PointF screenPoint = mMap.getProjection().toScreenLocation(point);
+        List<RCTSource> touchableSources = getAllTouchableSources();
+
+        Map<String, Feature> hits = new HashMap<>();
+        List<RCTSource> hitTouchableSources = new ArrayList<>();
+        for (RCTSource touchableSource : touchableSources) {
+            Map<String, Double> hitbox = touchableSource.getTouchHitbox();
+            if (hitbox == null) {
+                continue;
+            }
+
+            float halfWidth = hitbox.get("width").floatValue() / 2.0f;
+            float halfHeight = hitbox.get("height").floatValue() / 2.0f;
+
+            RectF hitboxF = new RectF();
+            hitboxF.set(
+                    screenPoint.x - halfWidth,
+                    screenPoint.y - halfHeight,
+                    screenPoint.x + halfWidth,
+                    screenPoint.y + halfHeight);
+
+            List<Feature> features = mMap.queryRenderedFeatures(hitboxF, touchableSource.getLayerIDs());
+            if (features.size() > 0) {
+                hits.put(touchableSource.getID(), features.get(0));
+                hitTouchableSources.add(touchableSource);
+            }
+        }
+
+        if (hits.size() > 0) {
+            RCTSource source = getTouchableSourceWithHighestZIndex(hitTouchableSources);
+            if (source != null && source.hasPressListener()) {
+                source.onPress(hits.get(source.getID()));
+                return;
+            }
+        }
+
+        MapClickEvent event = new MapClickEvent(this, point, screenPoint);
+        mManager.handleEvent(event);
     }
 
     @Override
@@ -388,7 +401,7 @@ public class RCTMGLMapView extends MapView implements
         final long id = annotation.getMapboxID();
 
         if (id != mActiveMarkerID) {
-            MarkerView markerView = annotation.getMarker();
+            final MarkerView markerView = annotation.getMarker();
             mMap.selectMarker(markerView);
             annotation.onSelect(true);
             mActiveMarkerID = id;
@@ -400,16 +413,19 @@ public class RCTMGLMapView extends MapView implements
         }
     }
 
-    public void deselectAnnotation(RCTMGLPointAnnotation annotation) {
+    public boolean deselectAnnotation(RCTMGLPointAnnotation annotation) {
         MarkerView markerView = annotation.getMarker();
+
+        RCTMGLCallout calloutView = annotation.getCalloutView();
+        if (calloutView != null) {
+            markerView.hideInfoWindow();
+        }
+
         mMap.deselectMarker(markerView);
         mActiveMarkerID = -1;
         annotation.onDeselect();
 
-        RCTMGLCallout calloutView = annotation.getCalloutView();
-        if (markerView.isInfoWindowShown() && calloutView != null) {
-            markerView.hideInfoWindow();
-        }
+        return calloutView != null;
     }
 
     @Override
@@ -678,6 +694,20 @@ public class RCTMGLMapView extends MapView implements
 
     public void init() {
         setStyleUrl(mStyleURL);
+
+        final OnAttachStateChangeListener attachStateChangeListener = new OnAttachStateChangeListener() {
+            @Override
+            public void onViewAttachedToWindow(View view) {
+                reflow();
+            }
+
+            @Override
+            public void onViewDetachedFromWindow(View view) {
+                removeOnAttachStateChangeListener(this);
+            }
+        };
+
+        addOnAttachStateChangeListener(attachStateChangeListener);
     }
 
     private void updateCameraPositionIfNeeded(boolean shouldUpdateTarget) {

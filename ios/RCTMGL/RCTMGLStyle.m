@@ -203,6 +203,10 @@
       [self setIconKeepUpright:layer withReactStyleValue:styleValue];
     } else if ([prop isEqualToString:@"iconOffset"]) {
       [self setIconOffset:layer withReactStyleValue:styleValue];
+    } else if ([prop isEqualToString:@"iconAnchor"]) {
+      [self setIconAnchor:layer withReactStyleValue:styleValue];
+    } else if ([prop isEqualToString:@"iconPitchAlignment"]) {
+      [self setIconPitchAlignment:layer withReactStyleValue:styleValue];
     } else if ([prop isEqualToString:@"textPitchAlignment"]) {
       [self setTextPitchAlignment:layer withReactStyleValue:styleValue];
     } else if ([prop isEqualToString:@"textRotationAlignment"]) {
@@ -342,6 +346,8 @@
       [self setCircleTranslateAnchor:layer withReactStyleValue:styleValue];
     } else if ([prop isEqualToString:@"circlePitchScale"]) {
       [self setCirclePitchScale:layer withReactStyleValue:styleValue];
+    } else if ([prop isEqualToString:@"circlePitchAlignment"]) {
+      [self setCirclePitchAlignment:layer withReactStyleValue:styleValue];
     } else if ([prop isEqualToString:@"circleStrokeWidth"]) {
       [self setCircleStrokeWidth:layer withReactStyleValue:styleValue];
     } else if ([prop isEqualToString:@"circleStrokeWidthTransition"]) {
@@ -553,7 +559,7 @@
 
 - (void)setFillStyleLayerVisibility:(MGLFillStyleLayer *)layer withReactStyleValue:(RCTMGLStyleValue *)styleValue
 {
-    layer.visible = styleValue.mglStyleValue;
+    layer.visible = [styleValue isVisible];
 }
 
 - (void)setFillAntialias:(MGLFillStyleLayer *)layer withReactStyleValue:(RCTMGLStyleValue *)styleValue
@@ -695,7 +701,7 @@
 
 - (void)setLineStyleLayerVisibility:(MGLLineStyleLayer *)layer withReactStyleValue:(RCTMGLStyleValue *)styleValue
 {
-    layer.visible = styleValue.mglStyleValue;
+    layer.visible = [styleValue isVisible];
 }
 
 - (void)setLineOpacity:(MGLLineStyleLayer *)layer withReactStyleValue:(RCTMGLStyleValue *)styleValue
@@ -995,6 +1001,26 @@
     layer.iconOffset = styleValue.mglStyleValue;
 }
 
+- (void)setIconAnchor:(MGLSymbolStyleLayer *)layer withReactStyleValue:(RCTMGLStyleValue *)styleValue
+{
+    NSArray<NSString*> *allowedFunctionTypes = @[@"camera", @"source", @"composite"];
+    if ([styleValue isFunction] && ![styleValue isFunctionTypeSupported:allowedFunctionTypes]) {
+        // TODO throw execpetion
+        return;
+    }
+    layer.iconAnchor = styleValue.mglStyleValue;
+}
+
+- (void)setIconPitchAlignment:(MGLSymbolStyleLayer *)layer withReactStyleValue:(RCTMGLStyleValue *)styleValue
+{
+    NSArray<NSString*> *allowedFunctionTypes = @[@"camera"];
+    if ([styleValue isFunction] && ![styleValue isFunctionTypeSupported:allowedFunctionTypes]) {
+        // TODO throw execpetion
+        return;
+    }
+    layer.iconPitchAlignment = styleValue.mglStyleValue;
+}
+
 - (void)setTextPitchAlignment:(MGLSymbolStyleLayer *)layer withReactStyleValue:(RCTMGLStyleValue *)styleValue
 {
     NSArray<NSString*> *allowedFunctionTypes = @[@"camera"];
@@ -1187,7 +1213,7 @@
 
 - (void)setSymbolStyleLayerVisibility:(MGLSymbolStyleLayer *)layer withReactStyleValue:(RCTMGLStyleValue *)styleValue
 {
-    layer.visible = styleValue.mglStyleValue;
+    layer.visible = [styleValue isVisible];
 }
 
 - (void)setIconOpacity:(MGLSymbolStyleLayer *)layer withReactStyleValue:(RCTMGLStyleValue *)styleValue
@@ -1394,7 +1420,7 @@
 
 - (void)setCircleStyleLayerVisibility:(MGLCircleStyleLayer *)layer withReactStyleValue:(RCTMGLStyleValue *)styleValue
 {
-    layer.visible = styleValue.mglStyleValue;
+    layer.visible = [styleValue isVisible];
 }
 
 - (void)setCircleRadius:(MGLCircleStyleLayer *)layer withReactStyleValue:(RCTMGLStyleValue *)styleValue
@@ -1492,6 +1518,16 @@
     layer.circleScaleAlignment = styleValue.mglStyleValue;
 }
 
+- (void)setCirclePitchAlignment:(MGLCircleStyleLayer *)layer withReactStyleValue:(RCTMGLStyleValue *)styleValue
+{
+    NSArray<NSString*> *allowedFunctionTypes = @[@"camera"];
+    if ([styleValue isFunction] && ![styleValue isFunctionTypeSupported:allowedFunctionTypes]) {
+        // TODO throw execpetion
+        return;
+    }
+    layer.circlePitchAlignment = styleValue.mglStyleValue;
+}
+
 - (void)setCircleStrokeWidth:(MGLCircleStyleLayer *)layer withReactStyleValue:(RCTMGLStyleValue *)styleValue
 {
     NSArray<NSString*> *allowedFunctionTypes = @[@"camera", @"source", @"composite"];
@@ -1541,7 +1577,7 @@
 
 - (void)setFillExtrusionStyleLayerVisibility:(MGLFillExtrusionStyleLayer *)layer withReactStyleValue:(RCTMGLStyleValue *)styleValue
 {
-    layer.visible = styleValue.mglStyleValue;
+    layer.visible = [styleValue isVisible];
 }
 
 - (void)setFillExtrusionOpacity:(MGLFillExtrusionStyleLayer *)layer withReactStyleValue:(RCTMGLStyleValue *)styleValue
@@ -1648,7 +1684,7 @@
 
 - (void)setRasterStyleLayerVisibility:(MGLRasterStyleLayer *)layer withReactStyleValue:(RCTMGLStyleValue *)styleValue
 {
-    layer.visible = styleValue.mglStyleValue;
+    layer.visible = [styleValue isVisible];
 }
 
 - (void)setRasterOpacity:(MGLRasterStyleLayer *)layer withReactStyleValue:(RCTMGLStyleValue *)styleValue
@@ -1760,7 +1796,7 @@
 
 - (void)setBackgroundStyleLayerVisibility:(MGLBackgroundStyleLayer *)layer withReactStyleValue:(RCTMGLStyleValue *)styleValue
 {
-    layer.visible = styleValue.mglStyleValue;
+    layer.visible = [styleValue isVisible];
 }
 
 - (void)setBackgroundColor:(MGLBackgroundStyleLayer *)layer withReactStyleValue:(RCTMGLStyleValue *)styleValue

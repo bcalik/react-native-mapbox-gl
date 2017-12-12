@@ -281,14 +281,14 @@
       {
         "name": "circleTranslate",
         "type": "array",
-        "description": "The geometry's offset. Values are `{ x: number, y: number }` where negatives indicate left and up, respectively.",
+        "description": "The geometry's offset. Values are [x, y] where negatives indicate left and up, respectively.",
         "requires": [],
         "disabledBy": []
       },
       {
         "name": "circleTranslateAnchor",
         "type": "enum",
-        "description": "Controls the translation reference point.",
+        "description": "Controls the frame of reference for `circleTranslate`.",
         "requires": [
           "circleTranslate"
         ],
@@ -298,6 +298,13 @@
         "name": "circlePitchScale",
         "type": "enum",
         "description": "Controls the scaling behavior of the circle when the map is pitched.",
+        "requires": [],
+        "disabledBy": []
+      },
+      {
+        "name": "circlePitchAlignment",
+        "type": "enum",
+        "description": "Orientation of circle when map is pitched.",
         "requires": [],
         "disabledBy": []
       },
@@ -430,14 +437,14 @@
       {
         "name": "fillExtrusionTranslate",
         "type": "array",
-        "description": "The geometry's offset. Values are `{ x: number, y: number }` where negatives indicate left and up (on the flat plane), respectively.",
+        "description": "The geometry's offset. Values are [x, y] where negatives indicate left and up (on the flat plane), respectively.",
         "requires": [],
         "disabledBy": []
       },
       {
         "name": "fillExtrusionTranslateAnchor",
         "type": "enum",
-        "description": "Controls the translation reference point.",
+        "description": "Controls the frame of reference for `fillExtrusionTranslate`.",
         "requires": [
           "fillExtrusionTranslate"
         ],
@@ -590,14 +597,14 @@
       {
         "name": "fillTranslate",
         "type": "array",
-        "description": "The geometry's offset. Values are `{ x: number, y: number }` where negatives indicate left and up, respectively.",
+        "description": "The geometry's offset. Values are [x, y] where negatives indicate left and up, respectively.",
         "requires": [],
         "disabledBy": []
       },
       {
         "name": "fillTranslateAnchor",
         "type": "enum",
-        "description": "Controls the translation reference point.",
+        "description": "Controls the frame of reference for `fillTranslate`.",
         "requires": [
           "fillTranslate"
         ],
@@ -611,6 +618,37 @@
         "disabledBy": []
       }
     ]
+  },
+  "ImageSource": {
+    "description": "ImageSource is a content source that is used for a georeferenced raster image to be shown on the map.\nThe georeferenced image scales and rotates as the user zooms and rotates the map",
+    "methods": [],
+    "props": [
+      {
+        "name": "id",
+        "required": false,
+        "type": "string",
+        "default": "none",
+        "description": "A string that uniquely identifies the source."
+      },
+      {
+        "name": "url",
+        "required": false,
+        "type": "union",
+        "default": "none",
+        "description": "An HTTP(S) URL, absolute file URL, or local file URL to the source image.\nGifs are currently not supported."
+      },
+      {
+        "name": "coordinates",
+        "required": true,
+        "type": "arrayOf",
+        "default": "none",
+        "description": "The top left, top right, bottom right, and bottom left coordinates for the image."
+      }
+    ],
+    "composes": [
+      "../utils"
+    ],
+    "name": "ImageSource"
   },
   "Light": {
     "description": "Light represents the light source for extruded geometries",
@@ -793,14 +831,14 @@
       {
         "name": "lineTranslate",
         "type": "array",
-        "description": "The geometry's offset. Values are `{ x: number, y: number }` where negatives indicate left and up, respectively.",
+        "description": "The geometry's offset. Values are [x, y] where negatives indicate left and up, respectively.",
         "requires": [],
         "disabledBy": []
       },
       {
         "name": "lineTranslateAnchor",
         "type": "enum",
-        "description": "Controls the translation reference point.",
+        "description": "Controls the frame of reference for `lineTranslate`.",
         "requires": [
           "lineTranslate"
         ],
@@ -1906,7 +1944,7 @@
       {
         "name": "iconImage",
         "type": "string",
-        "description": "Name of image in sprite to use for drawing an image background. A string with {tokens} replaced, referencing the data property to pull from.",
+        "description": "Name of image in sprite to use for drawing an image background. A string with `{tokens}` replaced, referencing the data property to pull from. (`{token}` replacement is only supported for literal `iconImage` values; not for property functions.)",
         "requires": [],
         "disabledBy": []
       },
@@ -1947,6 +1985,24 @@
         "disabledBy": []
       },
       {
+        "name": "iconAnchor",
+        "type": "enum",
+        "description": "Part of the icon placed closest to the anchor.",
+        "requires": [
+          "iconImage"
+        ],
+        "disabledBy": []
+      },
+      {
+        "name": "iconPitchAlignment",
+        "type": "enum",
+        "description": "Orientation of icon when map is pitched.",
+        "requires": [
+          "iconImage"
+        ],
+        "disabledBy": []
+      },
+      {
         "name": "textPitchAlignment",
         "type": "enum",
         "description": "Orientation of text when map is pitched.",
@@ -1967,7 +2023,7 @@
       {
         "name": "textField",
         "type": "string",
-        "description": "Value to use for a text label. Feature properties are specified using tokens like {field_name}.  (Token replacement is only supported for literal `textField` valuesNot for property functions.)",
+        "description": "Value to use for a text label. Feature properties are specified using tokens like `{field_name}`. (`{token}` replacement is only supported for literal `textField` values; not for property functions.)",
         "requires": [],
         "disabledBy": []
       },
@@ -2180,7 +2236,7 @@
       {
         "name": "iconTranslateAnchor",
         "type": "enum",
-        "description": "Controls the translation reference point.",
+        "description": "Controls the frame of reference for `iconTranslate`.",
         "requires": [
           "iconImage",
           "iconTranslate"
@@ -2244,7 +2300,7 @@
       {
         "name": "textTranslateAnchor",
         "type": "enum",
-        "description": "Controls the translation reference point.",
+        "description": "Controls the frame of reference for `textTranslate`.",
         "requires": [
           "textField",
           "textTranslate"
